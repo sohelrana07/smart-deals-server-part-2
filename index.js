@@ -9,8 +9,24 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// smartDbUser
-// SMm1yFfONxwwKOfj
+const logger = (req, res, next) => {
+  console.log("logging information");
+  next();
+};
+
+const verifyFireBaseToken = (req, res, next) => {
+  console.log("in the verify middleware", req.headers.authorization);
+  if (!req.headers.authorization) {
+    // do not allow to go
+    return res.status(401).send({ message: "unauthorized access!" });
+  }
+  const token = req.headers.authorization.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access!" });
+  }
+  // verify token
+  next();
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@fast-cluster.usibdwl.mongodb.net/?appName=Fast-Cluster`;
 
@@ -124,8 +140,9 @@ async function run() {
       res.send(result);
     });
 
-    // bids related apis (1 e dhoroner 2ta get korar code a agulo ak e kaj kore)
-    app.get("/bids", async (req, res) => {
+    // bids related apis
+    app.get("/bids", logger, verifyFireBaseToken, async (req, res) => {
+      // console.log("headers", req.headers);
       const email = req.query.email;
       const query = {};
       if (email) {
@@ -136,18 +153,6 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
-
-    // all bids
-    // app.get("/bids", async (req, res) => {
-    //   const query = {};
-    //   if (query.email) {
-    //     query.buyer_email = email;
-    //   }
-
-    //   const cursor = bidsCollection.find(query).sort({bid_price: -1});
-    //   const result = await cursor.toArray();
-    //   res.send(result);
-    // });
 
     // specific product bids apis
     app.get("/products/bids/:productId", async (req, res) => {
