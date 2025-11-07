@@ -9,25 +9,6 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const logger = (req, res, next) => {
-  console.log("logging information");
-  next();
-};
-
-const verifyFireBaseToken = (req, res, next) => {
-  console.log("in the verify middleware", req.headers.authorization);
-  if (!req.headers.authorization) {
-    // do not allow to go
-    return res.status(401).send({ message: "unauthorized access!" });
-  }
-  const token = req.headers.authorization.split(" ")[1];
-  if (!token) {
-    return res.status(401).send({ message: "unauthorized access!" });
-  }
-  // verify token
-  next();
-};
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@fast-cluster.usibdwl.mongodb.net/?appName=Fast-Cluster`;
 
 const client = new MongoClient(uri, {
@@ -141,8 +122,7 @@ async function run() {
     });
 
     // bids related apis
-    app.get("/bids", logger, verifyFireBaseToken, async (req, res) => {
-      // console.log("headers", req.headers);
+    app.get("/bids", async (req, res) => {
       const email = req.query.email;
       const query = {};
       if (email) {
